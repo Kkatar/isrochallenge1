@@ -61,7 +61,7 @@ function buildTooltip(props) {
  * MapCanvas — pure Leaflet JS (no react-leaflet) for maximum compatibility.
  * Renders a full-screen map with switchable tile layers and GeoJSON farm zones.
  */
-export default function MapCanvas({ activeLayer, selectedZone, onZoneSelect, drawMode, timeIndex }) {
+export default function MapCanvas({ activeLayer, selectedZone, onZoneSelect, drawMode, timeIndex, overlayOpacity = 80 }) {
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
   const tileRef      = useRef(null)
@@ -84,6 +84,7 @@ export default function MapCanvas({ activeLayer, selectedZone, onZoneSelect, dra
       attribution: '© CartoDB | AgroSense AI Platform',
       subdomains:  'abcd',
       maxZoom:     20,
+      opacity:     overlayOpacity / 100,
     }).addTo(map)
 
     return () => {
@@ -102,8 +103,16 @@ export default function MapCanvas({ activeLayer, selectedZone, onZoneSelect, dra
       attribution: '© CartoDB / ESRI | AgroSense AI Platform',
       subdomains:  'abcd',
       maxZoom:     20,
+      opacity:     overlayOpacity / 100,
     }).addTo(mapRef.current)
   }, [activeLayer])
+
+  /* ── Update tile layer opacity dynamically ───────────────────── */
+  useEffect(() => {
+    if (tileRef.current) {
+      tileRef.current.setOpacity(overlayOpacity / 100)
+    }
+  }, [overlayOpacity])
 
   /* ── Re-render GeoJSON layer when layer or selection changes ──── */
   useEffect(() => {

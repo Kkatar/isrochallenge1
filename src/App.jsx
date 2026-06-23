@@ -5,6 +5,9 @@ import LeftSidebar from './components/LeftSidebar'
 import RightSidebar from './components/RightSidebar'
 import BottomPanel from './components/BottomPanel'
 import Login from './components/Login'
+import SettingsModal from './components/SettingsModal'
+import NotificationsModal from './components/NotificationsModal'
+import { AI_ALERTS } from './data/mockData'
 
 /**
  * Root application component.
@@ -36,9 +39,31 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
+  // Settings & Notifications state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [alerts, setAlerts] = useState(AI_ALERTS)
+  const [settings, setSettings] = useState({
+    unit: 'C',
+    confidenceThreshold: 85,
+    overlayOpacity: 80,
+  })
+
   const handleLogout = useCallback(() => {
     localStorage.removeItem('agrosense_current_user')
     setUser(null)
+  }, [])
+
+  const handleDismissAlert = useCallback((id) => {
+    setAlerts(prev => prev.filter(a => a.id !== id))
+  }, [])
+
+  const handleResolveAlert = useCallback((id) => {
+    setAlerts(prev => prev.map(a => 
+      a.id === id 
+        ? { ...a, severity: 'success', yieldRisk: 'None', message: `RESOLVED: ${a.message.replace('RESOLVED: ', '')}`, recommendation: '✅ Resolved' }
+        : a
+    ))
   }, [])
 
   const handleZoneSelect = useCallback((zone) => {
@@ -68,6 +93,9 @@ export default function App() {
         onToggleDrawMode={() => setDrawMode(d => !d)}
         user={user}
         onLogout={handleLogout}
+        alertCount={alerts.filter(a => a.severity !== 'success').length}
+        onToggleNotifications={() => setIsNotificationsOpen(o => !o)}
+        onToggleSettings={() => setIsSettingsOpen(o => !o)}
       />
 
       {/* Main layout grid (below header) */}
@@ -90,6 +118,7 @@ export default function App() {
             onZoneSelect={handleZoneSelect}
             drawMode={drawMode}
             timeIndex={timeIndex}
+            overlayOpacity={settings.overlayOpacity}
           />
 
           {/* Bottom timeline panel */}
@@ -108,6 +137,22 @@ export default function App() {
           timeIndex={timeIndex}
         />
       </div>
+
+      {/* Modals */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        onSettingsChange={setSettings}
+      />
+
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        alerts={alerts}
+        onDismissAlert={handleDismissAlert}
+        onResolveAlert={handleResolveAlert}
+      />
     </div>
   )
 }

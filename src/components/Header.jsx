@@ -9,7 +9,7 @@ const LAYER_OPTS = [
 /**
  * Top navigation bar with logo, layer switcher, live status, and controls.
  */
-export default function Header({ activeLayer, onLayerChange, drawMode, onToggleDrawMode, user, onLogout }) {
+export default function Header({ activeLayer, onLayerChange, drawMode, onToggleDrawMode, user, onLogout, alertCount = 0, onToggleNotifications, onToggleSettings }) {
   return (
     <header
       id="app-header"
@@ -84,13 +84,27 @@ export default function Header({ activeLayer, onLayerChange, drawMode, onToggleD
         </div>
 
         {/* Alert badge */}
-        <button id="btn-alerts" className="relative p-2 rounded-lg glass-hover">
+        <button
+          id="btn-alerts"
+          onClick={onToggleNotifications}
+          className="relative p-2 rounded-lg glass-hover transition-colors"
+          title="AI Notifications"
+        >
           <Bell size={15} className="text-gray-300" />
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" />
+          {alertCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-1 rounded-full bg-red-500 text-[8px] font-bold text-white flex items-center justify-center font-mono animate-pulse">
+              {alertCount}
+            </span>
+          )}
         </button>
 
         {/* Settings */}
-        <button id="btn-settings" className="p-2 rounded-lg glass-hover">
+        <button
+          id="btn-settings"
+          onClick={onToggleSettings}
+          className="p-2 rounded-lg glass-hover transition-colors"
+          title="Settings"
+        >
           <Settings size={15} className="text-gray-300" />
         </button>
 
