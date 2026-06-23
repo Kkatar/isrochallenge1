@@ -109,8 +109,61 @@ export default function RightSidebar({ open, onToggle, selectedZone, timeIndex }
   const zp = zone?.properties
 
   const downloadReport = () => {
-    const blob=new Blob([JSON.stringify({ report:'AgroSense AI Report', zone:zp?.name||'All', data:zp||FARM_ZONES.features.map(f=>f.properties) },null,2)],{type:'application/json'})
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='agrosense-report.json'; a.click()
+    const zoneName = zp?.name || 'All Zones'
+    const timestamp = new Date().toLocaleString()
+    
+    let reportText = `==================================================
+              AGROSENSE AI REPORT
+==================================================
+Report Level: ${zoneName.toUpperCase()}
+Generated On: ${timestamp}
+System Status: ACTIVE (Optimal)
+--------------------------------------------------
+
+`
+
+    if (zp) {
+      reportText += `[ ZONE DETAILS: ${zp.name} ]
+- Crop Type: ${zp.cropType || 'N/A'}
+- Growth Stage: ${zp.stage || 'N/A'}
+- Total Area: ${zp.area_ha || '0'} hectares
+- Current NDVI (Greenness): ${zp.ndvi || 'N/A'}
+- Soil Moisture Index: ${(zp.moisture * 100).toFixed(0)}%
+- Projected Yield: ${zp.yield_forecast || 'N/A'} t/ha
+
+[ RECOMMENDATIONS & ANALYSIS ]
+- Soil moisture is at ${(zp.moisture * 100).toFixed(0)}%, which indicates ${zp.moisture > 0.55 ? 'optimal irrigation' : zp.moisture > 0.35 ? 'moderate water stress - monitor closely' : 'severe drought stress - immediate irrigation required'}.
+- The crop is in the ${zp.stage || 'N/A'} stage. Keep nutrient application synced with phenological phases.`
+    } else {
+      reportText += `[ GLOBAL SITE SUMMARY ]
+- Total Monitored Area: 373.7 ha
+- Active Zones: 4
+- Average Crop Health (NDVI): 0.72 (Optimal)
+- AI Model Confidence: 92.6%
+- Active Alerts: 2 Warnings
+
+[ INDIVIDUAL ZONE PROFILES ]\n`
+      
+      FARM_ZONES.features.forEach((feat, idx) => {
+        const p = feat.properties
+        reportText += `
+Zone ${idx + 1}: ${p.name}
+  - Crop: ${p.cropType} (${p.stage})
+  - Area: ${p.area_ha} ha
+  - NDVI: ${p.ndvi} | Moisture: ${(p.moisture * 100).toFixed(0)}%
+  - Yield Forecast: ${p.yield_forecast} t/ha\n`
+      })
+    }
+
+    reportText += `\n--------------------------------------------------
+This report was generated automatically by the AgroSense AI Platform.
+==================================================`
+
+    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `agrosense-report-${zoneName.toLowerCase().replace(/\s+/g, '-')}.txt`
+    a.click()
   }
   const exportGeoJSON = () => {
     const blob=new Blob([JSON.stringify(zone?{type:'FeatureCollection',features:[zone]}:FARM_ZONES,null,2)],{type:'application/geo+json'})

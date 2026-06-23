@@ -4,6 +4,7 @@ import MapCanvas from './components/MapCanvas'
 import LeftSidebar from './components/LeftSidebar'
 import RightSidebar from './components/RightSidebar'
 import BottomPanel from './components/BottomPanel'
+import Login from './components/Login'
 
 /**
  * Root application component.
@@ -29,6 +30,17 @@ export default function App() {
   // Drawing mode (polygon tool)
   const [drawMode, setDrawMode] = useState(false)
 
+  // User state (restores from localStorage if present)
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('agrosense_current_user')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('agrosense_current_user')
+    setUser(null)
+  }, [])
+
   const handleZoneSelect = useCallback((zone) => {
     setSelectedZone(zone)
     if (!rightOpen) setRightOpen(true)
@@ -42,6 +54,10 @@ export default function App() {
     )
   }, [])
 
+  if (!user) {
+    return <Login onLoginSuccess={setUser} />
+  }
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-animated">
       {/* Top navigation bar */}
@@ -50,6 +66,8 @@ export default function App() {
         onLayerChange={setActiveLayer}
         drawMode={drawMode}
         onToggleDrawMode={() => setDrawMode(d => !d)}
+        user={user}
+        onLogout={handleLogout}
       />
 
       {/* Main layout grid (below header) */}

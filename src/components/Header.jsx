@@ -9,7 +9,7 @@ const LAYER_OPTS = [
 /**
  * Top navigation bar with logo, layer switcher, live status, and controls.
  */
-export default function Header({ activeLayer, onLayerChange, drawMode, onToggleDrawMode }) {
+export default function Header({ activeLayer, onLayerChange, drawMode, onToggleDrawMode, user, onLogout }) {
   return (
     <header
       id="app-header"
@@ -99,6 +99,24 @@ export default function Header({ activeLayer, onLayerChange, drawMode, onToggleD
           <div className="text-xs font-mono text-gray-400">23 Jun 2026</div>
           <div className="text-xs font-mono text-neon leading-none">11:09 IST</div>
         </div>
+
+        {/* User profile dropdown */}
+        {user && (
+          <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+            <div className="w-8 h-8 rounded-full bg-neon-green/20 border border-neon-green/40 flex items-center justify-center text-xs font-bold text-neon-green select-none">
+              {user.username ? user.username.substring(0, 2).toUpperCase() : 'US'}
+            </div>
+            <div className="hidden sm:block text-left">
+              <div className="text-xs font-semibold text-white leading-tight">{user.username}</div>
+              <button 
+                onClick={onLogout} 
+                className="text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline block leading-tight text-left transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )
