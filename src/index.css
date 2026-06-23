@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Root & scrollbar ─────────────────────────────────────────── */
+:root {
+  --glass-bg:     rgba(10, 22, 40, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+  --neon-green:   #00ff88;
+  --neon-amber:   #ffb300;
+  --sar-blue:     #00c6ff;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #020409;
+  color: #e2e8f0;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,255,136,0.5); }
+
+/* ─── Glassmorphism utility ─────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-hover {
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.glass-hover:hover {
+  background: rgba(15, 31, 56, 0.82);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* ─── Neon text glow ────────────────────────────────────────────── */
+.text-neon {
+  color: var(--neon-green);
+  text-shadow: 0 0 8px rgba(0,255,136,0.55);
+}
+.text-neon-amber {
+  color: var(--neon-amber);
+  text-shadow: 0 0 8px rgba(255,179,0,0.55);
+}
+.text-sar {
+  color: var(--sar-blue);
+  text-shadow: 0 0 8px rgba(0,198,255,0.55);
+}
+
+/* ─── Gradient borders ──────────────────────────────────────────── */
+.border-neon { border-color: rgba(0,255,136,0.35) !important; }
+.border-amber-glow { border-color: rgba(255,179,0,0.4) !important; }
+.border-sar { border-color: rgba(0,198,255,0.35) !important; }
+
+/* ─── Leaflet overrides ─────────────────────────────────────────── */
+.leaflet-container {
+  background: #020409 !important;
+  font-family: 'Inter', sans-serif;
+}
+.leaflet-control-attribution {
+  background: rgba(2,4,9,0.7) !important;
+  color: rgba(255,255,255,0.35) !important;
+  font-size: 10px;
+  backdrop-filter: blur(6px);
+}
+.leaflet-bar a {
+  background: rgba(10,22,40,0.85) !important;
+  color: var(--neon-green) !important;
+  border-color: rgba(0,255,136,0.2) !important;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+.leaflet-bar a:hover {
+  background: rgba(0,255,136,0.15) !important;
+}
+.leaflet-draw-toolbar a {
+  background: rgba(10,22,40,0.9) !important;
+  color: #00ff88 !important;
+}
+.leaflet-control-zoom {
+  border: 1px solid rgba(0,255,136,0.2) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+/* ─── Animated gradient background ─────────────────────────────── */
+.bg-animated {
+  background: linear-gradient(135deg, #020409 0%, #060d1f 40%, #0a1628 70%, #020409 100%);
+  background-size: 400% 400%;
+  animation: gradient-x 12s ease infinite;
+}
+
+@keyframes gradient-x {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ─── Pulse dot ─────────────────────────────────────────────────── */
+@keyframes pulseDot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: 0.5; transform: scale(1.4); }
+}
+.pulse-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+
+/* ─── Slide animations ──────────────────────────────────────────── */
+@keyframes slideInLeft  { from { transform: translateX(-100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideInRight { from { transform: translateX(100%);  opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideInUp    { from { transform: translateY(100%);  opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes fadeIn       { from { opacity:0; } to { opacity:1; } }
+
+.animate-slide-left  { animation: slideInLeft  0.35s ease-out; }
+.animate-slide-right { animation: slideInRight 0.35s ease-out; }
+.animate-slide-up    { animation: slideInUp    0.35s ease-out; }
+.animate-fade-in     { animation: fadeIn       0.35s ease-out; }
+
+/* ─── Gauge / ring ──────────────────────────────────────────────── */
+.gauge-ring {
+  transform-origin: center;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ─── Timeline track ────────────────────────────────────────────── */
+.timeline-track {
+  height: 4px;
+  background: linear-gradient(90deg,
+    rgba(0,255,136,0.15) 0%,
+    rgba(0,198,255,0.15) 50%,
+    rgba(255,179,0,0.15) 100%
+  );
+  border-radius: 4px;
+}
+
+/* ─── Range input styling ───────────────────────────────────────── */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: linear-gradient(90deg, var(--neon-green), var(--sar-blue));
+  border-radius: 4px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,255,136,0.6);
+  transition: box-shadow 0.2s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 18px rgba(0,255,136,0.9);
+}
