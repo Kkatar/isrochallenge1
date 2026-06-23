@@ -1,24 +1,8 @@
 import { useState } from 'react'
 import { Brain, Lock, Mail, User, Check, AlertCircle } from 'lucide-react'
-
-// Simulated database initialization helper
-const initUserDatabase = () => {
-  const users = localStorage.getItem('agrosense_users')
-  if (!users) {
-    const defaultUsers = [
-      {
-        username: 'AgroAdmin',
-        email: 'admin@agrosense.ai',
-        password: 'password123',
-        createdAt: new Date().toISOString(),
-      }
-    ]
-    localStorage.setItem('agrosense_users', JSON.stringify(defaultUsers))
-  }
-}
+import { supabase } from '../lib/supabaseClient'
 
 export default function Login({ onLoginSuccess }) {
-  initUserDatabase()
   const [isSignUp, setIsSignUp] = useState(false)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -26,67 +10,86 @@ export default function Login({ onLoginSuccess }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleAuth = (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault()
     setError('')
     setSuccess('')
+    setLoading(true)
 
-    const users = JSON.parse(localStorage.getItem('agrosense_users') || '[]')
+    try {
+      if (isSignUp) {
+        // Sign Up validation
+        if (!username || !email || !password || !confirmPassword) {
+          setError('All fields are required.')
+          setLoading(false)
+          return
+        }
+        if (password !== confirmPassword) {
+          setError('Passwords do not match.')
+          setLoading(false)
+          return
+        }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters.')
+          setLoading(false)
+          return
+        }
 
-    if (isSignUp) {
-      // Sign Up validation
-      if (!username || !email || !password || !confirmPassword) {
-        setError('All fields are required.')
-        return
-      }
-      if (password !== confirmPassword) {
-        setError('Passwords do not match.')
-        return
-      }
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters.')
-        return
-      }
+        // Supabase sign up
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.toLowerCase(),
+          password: password,
+          options: {
+            data: {
+              username: username
+            }
+          }
+        })
 
-      // Check if user already exists
-      const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase())
-      if (userExists) {
-        setError('An account with this email already exists.')
-        return
-      }
+        if (signUpError) {
+          setError(signUpError.message)
+          setLoading(false)
+          return
+        }
 
-      // Save user
-      const newUser = {
-        username,
-        email: email.toLowerCase(),
-        password,
-        createdAt: new Date().toISOString()
-      }
-      users.push(newUser)
-      localStorage.setItem('agrosense_users', JSON.stringify(users))
-      setSuccess('Account created successfully! You can now log in.')
-      setIsSignUp(false)
-      // Reset signup specific fields
-      setPassword('')
-      setConfirmPassword('')
-    } else {
-      // Login validation
-      if (!email || !password) {
-        setError('Please enter your email and password.')
-        return
-      }
-
-      const user = users.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      )
-
-      if (user) {
-        localStorage.setItem('agrosense_current_user', JSON.stringify(user))
-        onLoginSuccess(user)
+        setSuccess('Registration successful! If email verification is enabled, please verify your email. Otherwise, you can log in now.')
+        setIsSignUp(false)
+        setPassword('')
+        setConfirmPassword('')
       } else {
-        setError('Invalid email or password.')
+        // Login validation
+        if (!email || !password) {
+          setError('Please enter your email and password.')
+          setLoading(false)
+          return
+        }
+
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase(),
+          password: password
+        })
+
+        if (signInError) {
+          setError(signInError.message)
+          setLoading(false)
+          return
+        }
+
+        if (data?.user) {
+          const userObj = {
+            id: data.user.id,
+            email: data.user.email,
+            username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+          }
+          onLoginSuccess(userObj)
+        }
       }
+    } catch (err) {
+      setError('Could not connect to Supabase. Check your API credentials.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -136,6 +139,7 @@ export default function Login({ onLoginSuccess }) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. AgroFarmer"
+                  required
                   className="w-full pl-9 pr-3 py-2 text-sm bg-black/40 border border-white/10 rounded-xl focus:border-neon-green focus:ring-1 focus:ring-neon-green text-white placeholder-gray-500 transition-colors"
                 />
               </div>
@@ -153,6 +157,7 @@ export default function Login({ onLoginSuccess }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@agrosense.ai"
+                required
                 className="w-full pl-9 pr-3 py-2 text-sm bg-black/40 border border-white/10 rounded-xl focus:border-neon-green focus:ring-1 focus:ring-neon-green text-white placeholder-gray-500 transition-colors"
               />
             </div>
@@ -169,6 +174,7 @@ export default function Login({ onLoginSuccess }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                required
                 className="w-full pl-9 pr-3 py-2 text-sm bg-black/40 border border-white/10 rounded-xl focus:border-neon-green focus:ring-1 focus:ring-neon-green text-white placeholder-gray-500 transition-colors"
               />
             </div>
@@ -186,6 +192,7 @@ export default function Login({ onLoginSuccess }) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
+                  required
                   className="w-full pl-9 pr-3 py-2 text-sm bg-black/40 border border-white/10 rounded-xl focus:border-neon-green focus:ring-1 focus:ring-neon-green text-white placeholder-gray-500 transition-colors"
                 />
               </div>
@@ -194,9 +201,10 @@ export default function Login({ onLoginSuccess }) {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl text-xs font-bold text-black bg-neon-green hover:bg-[#00e676] shadow-neon transition-all duration-200 mt-2 flex items-center justify-center gap-1.5"
+            disabled={loading}
+            className="w-full py-2.5 rounded-xl text-xs font-bold text-black bg-neon-green hover:bg-[#00e676] shadow-neon transition-all duration-200 mt-2 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSignUp ? 'Create Account' : 'Sign In to Dashboard'}
+            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In to Dashboard'}
           </button>
         </form>
 
@@ -215,15 +223,6 @@ export default function Login({ onLoginSuccess }) {
             {isSignUp ? 'Log In' : 'Sign Up'}
           </button>
         </div>
-
-        {/* Demo Credentials Helper */}
-        {!isSignUp && (
-          <div className="mt-6 p-3 rounded-xl bg-white/5 border border-white/5 text-[11px] text-gray-400">
-            <span className="font-semibold text-white block mb-1">💡 Demo Admin Account:</span>
-            <div>Email: <span className="font-mono text-neon-green select-all">admin@agrosense.ai</span></div>
-            <div>Password: <span className="font-mono text-neon-green select-all">password123</span></div>
-          </div>
-        )}
       </div>
     </div>
   )

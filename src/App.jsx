@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Header from './components/Header'
 import MapCanvas from './components/MapCanvas'
 import LeftSidebar from './components/LeftSidebar'
@@ -8,6 +8,7 @@ import Login from './components/Login'
 import SettingsModal from './components/SettingsModal'
 import NotificationsModal from './components/NotificationsModal'
 import { AI_ALERTS } from './data/mockData'
+import { supabase } from './lib/supabaseClient'
 
 /**
  * Root application component.
@@ -33,11 +34,39 @@ export default function App() {
   // Drawing mode (polygon tool)
   const [drawMode, setDrawMode] = useState(false)
 
-  // User state (restores from localStorage if present)
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('agrosense_current_user')
-    return saved ? JSON.parse(saved) : null
-  })
+  // User state
+  const [user, setUser] = useState(null)
+
+  // Autologin and session state listener
+  useEffect(() => {
+    // 1. Get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          username: session.user.user_metadata?.username || session.user.email.split('@')[0],
+        })
+      }
+    })
+
+    // 2. Listen to changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          username: session.user.user_metadata?.username || session.user.email.split('@')[0],
+        })
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   // Settings & Notifications state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -49,8 +78,8 @@ export default function App() {
     overlayOpacity: 80,
   })
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('agrosense_current_user')
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut()
     setUser(null)
   }, [])
 
